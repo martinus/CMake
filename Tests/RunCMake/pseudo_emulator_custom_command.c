@@ -6,27 +6,29 @@
 //
 //  /path/to/program arg1 [arg2 [...]]
 //
-// Return EXIT_SUCCESS if 'generated_exe_emulator_expected' string was found in <arg1>
-// Return EXIT_FAILURE if 'generated_exe_emulator_unexpected' string was found in <arg1>
+// Return EXIT_SUCCESS if 'generated_exe_emulator_expected'
+// string was found in <arg1>.
+// Return EXIT_FAILURE if 'generated_exe_emulator_unexpected'
+// string was found in <arg1>.
 
-int main(int argc, char * argv[] )
+int main(int argc, const char* argv[])
 {
   const char* substring_failure = "generated_exe_emulator_unexpected";
   const char* substring_success = "generated_exe_emulator_expected";
-  const char* string = 0;
-  string = argv[1];
+  const char* str = argv[1];
   if (argc < 2)
     {
     return EXIT_FAILURE;
     }
-  if (strstr(string, substring_success) != 0)
+  if (strstr(str, substring_success) != 0)
     {
     return EXIT_SUCCESS;
     }
-  if (strstr(string, substring_failure) != 0)
+  if (strstr(str, substring_failure) != 0)
     {
     return EXIT_FAILURE;
     }
-  fprintf(stderr, "Failed to find string '%s' in '%s'\n", substring_success, string);
+  fprintf(stderr, "Failed to find string '%s' in '%s'\n",
+          substring_success, str);
   return EXIT_FAILURE;
 }
