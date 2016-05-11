@@ -247,8 +247,6 @@ int cmCPackDebGenerator::PackageComponentsAllInOne(
 
 int cmCPackDebGenerator::PackageFiles()
 {
-  int retval = -1;
-
   /* Are we in the component packaging case */
   if (WantsComponentInstallation()) {
     // CASE 1 : COMPONENT ALL-IN-ONE package
@@ -273,7 +271,6 @@ int cmCPackDebGenerator::PackageFiles()
     {
     return PackageComponentsAllInOne("");
     }
-  return retval;
 }
 
 int cmCPackDebGenerator::createDeb()
