@@ -354,9 +354,8 @@
 #
 #  .. note::
 #
-#    This variable has no effect unless CPACK_DEBIAN_PACKAGE_SHLIBDEPS is enabled.
-#    Also note that libraries are only considered if they have both library name
-#    and version set. This can be done by setting SOVERSION property with
+#    Libraries are only considered if they have both library name and version
+#    set. This can be done by setting SOVERSION property with
 #    :command:`set_target_properties` command.
 #
 #
@@ -523,6 +522,39 @@ function(cpack_deb_prepare_package_vars)
     endif()
   endif()
 
+  if(CPACK_DEBIAN_PACKAGE_SHLIBDEPS OR CPACK_DEBIAN_PACKAGE_GENERATE_SHLIBS)
+    # Generating binary list - Get type of all install files
+    cmake_policy(PUSH)
+      # Tell file(GLOB_RECURSE) not to follow directory symlinks
+      # even if the project does not set this policy to NEW.
+      cmake_policy(SET CMP0009 NEW)
+      file(GLOB_RECURSE FILE_PATHS_ LIST_DIRECTORIES false RELATIVE "${WDIR}" "${WDIR}/*")
+    cmake_policy(POP)
+
+    # get file info so that we can determine if file is executable or not
+    unset(CPACK_DEB_INSTALL_FILES)
+    foreach(FILE_ IN LISTS FILE_PATHS_)
+      execute_process(COMMAND file "./${FILE_}"
+        WORKING_DIRECTORY "${WDIR}"
+        OUTPUT_VARIABLE INSTALL_FILE_)
+      list(APPEND CPACK_DEB_INSTALL_FILES "${INSTALL_FILE_}")
+    endforeach()
+
+    # Only dynamically linked ELF files are included
+    # Extract only file name infront of ":"
+    foreach(_FILE ${CPACK_DEB_INSTALL_FILES})
+      if( ${_FILE} MATCHES "ELF.*dynamically linked")
+        string(REGEX MATCH "(^.*):" _FILE_NAME "${_FILE}")
+        list(APPEND CPACK_DEB_BINARY_FILES "${CMAKE_MATCH_1}")
+        set(CONTAINS_EXECUTABLE_FILES_ TRUE)
+      endif()
+      if( ${_FILE} MATCHES "ELF.*shared object")
+        string(REGEX MATCH "(^.*):" _FILE_NAME ${_FILE})
+        list(APPEND CPACK_DEB_SHARED_OBJECT_FILES ${CMAKE_MATCH_1})
+      endif()
+    endforeach()
+  endif()
+
   if(CPACK_DEBIAN_PACKAGE_SHLIBDEPS)
     # dpkg-shlibdeps is a Debian utility for generating dependency list
     find_program(SHLIBDEPS_EXECUTABLE dpkg-shlibdeps)
@@ -543,38 +575,6 @@ function(cpack_deb_prepare_package_vars)
         message("CPackDeb Debug: dpkg-shlibdeps --version output is '${_TMP_VERSION}'")
         message("CPackDeb Debug: dpkg-shlibdeps version is <${SHLIBDEPS_EXECUTABLE_VERSION}>")
       endif()
-
-      # Generating binary list - Get type of all install files
-      cmake_policy(PUSH)
-        # Tell file(GLOB_RECURSE) not to follow directory symlinks
-        # even if the project does not set this policy to NEW.
-        cmake_policy(SET CMP0009 NEW)
-        file(GLOB_RECURSE FILE_PATHS_ LIST_DIRECTORIES false RELATIVE "${WDIR}" "${WDIR}/*")
-      cmake_policy(POP)
-
-      # get file info so that we can determine if file is executable or not
-      unset(CPACK_DEB_INSTALL_FILES)
-      foreach(FILE_ IN LISTS FILE_PATHS_)
-        execute_process(COMMAND file "./${FILE_}"
-          WORKING_DIRECTORY "${WDIR}"
-          OUTPUT_VARIABLE INSTALL_FILE_)
-        list(APPEND CPACK_DEB_INSTALL_FILES "${INSTALL_FILE_}")
-      endforeach()
-
-      # Only dynamically linked ELF files are included
-      # Extract only file name infront of ":"
-      foreach(_FILE ${CPACK_DEB_INSTALL_FILES})
-        if( ${_FILE} MATCHES "ELF.*dynamically linked")
-          string(REGEX MATCH "(^.*):" _FILE_NAME "${_FILE}")
-          list(APPEND CPACK_DEB_BINARY_FILES "${CMAKE_MATCH_1}")
-          set(CONTAINS_EXECUTABLE_FILES_ TRUE)
-        endif()
-        if( ${_FILE} MATCHES "ELF.*shared object")
-          string(REGEX MATCH "(^.*):" _FILE_NAME ${_FILE})
-          list(APPEND CPACK_DEB_SHARED_OBJECT_FILES ${CMAKE_MATCH_1})
-          set(CONTAINS_EXECUTABLE_FILES_ TRUE)
-        endif()
-      endforeach()
 
       if(CONTAINS_EXECUTABLE_FILES_)
         message("CPackDeb: - Generating dependency list")
