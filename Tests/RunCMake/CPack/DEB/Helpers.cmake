@@ -19,6 +19,10 @@ function(verifyDebControl FILE PREFIX VERIFY_FILES)
   endif()
 
   foreach(FILE_ IN LISTS VERIFY_FILES)
+    if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/control_${PREFIX}/${FILE_}")
+      message(FATAL_ERROR "Expected Debian control file does not exist: '${FILE_}'")
+    endif()
+
     file(READ "${CMAKE_CURRENT_BINARY_DIR}/control_${PREFIX}/${FILE_}" content_)
     if(NOT content_ MATCHES "${${PREFIX}_${FILE_}}")
       message(FATAL_ERROR "Unexpected content in for '${PREFIX}_${FILE_}'!"
