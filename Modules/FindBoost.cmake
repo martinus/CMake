@@ -1435,10 +1435,11 @@ foreach(COMPONENT ${Boost_FIND_COMPONENTS})
   _Boost_COMPONENT_HEADERS("${COMPONENT}" Boost_${UPPERCOMPONENT}_HEADER_NAME)
   # Look for a standard boost header file.
   if(Boost_${UPPERCOMPONENT}_HEADER_NAME)
-    find_path(Boost_${UPPERCOMPONENT}_HEADER
-      NAMES         ${Boost_${UPPERCOMPONENT}_HEADER_NAME}
-      HINTS         ${Boost_INCLUDE_DIR}
-      )
+    if(EXISTS "${Boost_INCLUDE_DIR}/${Boost_${UPPERCOMPONENT}_HEADER_NAME}")
+      set(Boost_${UPPERCOMPONENT}_HEADER ON)
+    else()
+      set(Boost_${UPPERCOMPONENT}_HEADER OFF)
+    endif()
   else()
     set(Boost_${UPPERCOMPONENT}_HEADER ON)
     message(WARNING "No header defined for ${COMPONENT}; skipping header check")
