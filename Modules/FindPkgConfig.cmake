@@ -225,17 +225,18 @@ function(_pkg_create_imp_target _prefix _no_cmake_path _no_cmake_environment_pat
   if (NOT TARGET PkgConfig::${_prefix}
       AND ( ${_prefix}_INCLUDE_DIRS OR _libs OR ${_prefix}_CFLAGS_OTHER ))
     add_library(PkgConfig::${_prefix} INTERFACE IMPORTED)
+
+    unset(_props)
     if(${_prefix}_INCLUDE_DIRS)
-      set_target_properties(PkgConfig::${_prefix} PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${${_prefix}_INCLUDE_DIRS}")
+      list(APPEND _props INTERFACE_INCLUDE_DIRECTORIES "${${_prefix}_INCLUDE_DIRS}")
     endif()
     if(_libs)
-      set_target_properties(PkgConfig::${_prefix} PROPERTIES
-        INTERFACE_LINK_LIBRARIES "${_libs}")
+      list(APPEND _props INTERFACE_LINK_LIBRARIES "${_libs}")
     endif()
     if(${_prefix}_CFLAGS_OTHER)
-      set_property(TARGET PkgConfig::${_prefix} PROPERTY INTERFACE_COMPILE_OPTIONS "${${_prefix}_CFLAGS_OTHER}")
+      list(APPEND _props INTERFACE_COMPILE_OPTIONS "${${_prefix}_CFLAGS_OTHER}")
     endif()
+    set_target_properties(PkgConfig::${_prefix} PROPERTIES ${_props})
   endif()
 endfunction()
 
