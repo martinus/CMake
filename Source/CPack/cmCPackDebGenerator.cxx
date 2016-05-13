@@ -205,11 +205,15 @@ int cmCPackDebGenerator::PackageComponentsAllInOne(
   /* replace the TEMPORARY package file name */
   this->SetOption("CPACK_TEMPORARY_PACKAGE_FILE_NAME",
       packageFileName.c_str());
-  // Tell CPackDeb.cmake the path where the component is.
-  std::string component_path = "/";
-  component_path += compInstDirName;
-  this->SetOption("CPACK_DEB_PACKAGE_COMPONENT_PART_PATH",
-                  component_path.c_str());
+
+  if(!compInstDirName.empty())
+    {
+    // Tell CPackDeb.cmake the path where the component is.
+    std::string component_path = "/";
+    component_path += compInstDirName;
+    this->SetOption("CPACK_DEB_PACKAGE_COMPONENT_PART_PATH",
+                    component_path.c_str());
+    }
   if (!this->ReadListFile("CPackDeb.cmake"))
     {
     cmCPackLogger(cmCPackLog::LOG_ERROR,
