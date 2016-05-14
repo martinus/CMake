@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 project(FindPkgConfig_IMPORTED_TARGET C)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(NCURSES IMPORTED_TARGET QUIET REQUIRED ncurses)
+pkg_check_modules(NCURSES IMPORTED_TARGET QUIET ncurses)
 
 if (NCURSES_FOUND)
   set(tgt PkgConfig::NCURSES)
