@@ -18,7 +18,6 @@
 #include "cmSourceFile.h"
 #include "cmTarget.h"
 #include <assert.h>
-#include <cmAlgorithms.h>
 
 std::string const cmGhsMultiTargetGenerator::DDOption("-dynamic");
 
@@ -470,16 +469,11 @@ cmGhsMultiTargetGenerator::GetObjectNames(
     std::string const longestObjectDirectory(
       cmGhsMultiTargetGenerator::ComputeLongestObjectDirectory(
         localGhsMultiGenerator, generatorTarget, *sf));
-    std::string fullFilename = (*sf)->GetFullPath();
-    bool const ObjPathFound = cmLocalGeneratorCheckObjectName(
-      fullFilename, longestObjectDirectory.size(), MAX_FULL_PATH_LENGTH);
-    if (!ObjPathFound) {
-      cmSystemTools::Error("Object path \"", fullFilename.c_str(),
-                           "\" too long", "");
-    }
-    cmsys::SystemTools::ReplaceString(fullFilename, ":/", "_");
-    cmsys::SystemTools::ReplaceString(fullFilename, "/", "_");
-    objectNamesCorrected[*sf] = fullFilename;
+    std::string objFilenameName =
+      localGhsMultiGenerator->GetObjectFileNameWithoutTarget(
+        **sf, longestObjectDirectory);
+    cmsys::SystemTools::ReplaceString(objFilenameName, "/", "_");
+    objectNamesCorrected[*sf] = objFilenameName;
   }
 
   return objectNamesCorrected;
@@ -517,8 +511,7 @@ void cmGhsMultiTargetGenerator::WriteSources(
       this->WriteObjectLangOverride(this->FolderBuildStreams[sgPath], (*si));
       if (objectNames.end() != objectNames.find(*si)) {
         *this->FolderBuildStreams[sgPath]
-          << "    -o \"" << objectNames.find(*si)->second << ".o\""
-          << std::endl;
+          << "    -o \"" << objectNames.find(*si)->second << "\"" << std::endl;
       }
 
       this->WriteObjectDir(this->FolderBuildStreams[sgPath],
