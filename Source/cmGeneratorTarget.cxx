@@ -518,16 +518,18 @@ static void handleSystemIncludesDep(
   }
 }
 
+/* clang-format off */
 #define IMPLEMENT_VISIT_IMPL(DATA, DATATYPE)                                  \
   {                                                                           \
     std::vector<cmSourceFile*> sourceFiles;                                   \
     this->GetSourceFiles(sourceFiles, config);                                \
-    TagVisitor<DATA##Tag DATATYPE> visitor(this, data);                       \
+    TagVisitor< DATA##Tag DATATYPE > visitor(this, data);                     \
     for (std::vector<cmSourceFile*>::const_iterator si = sourceFiles.begin(); \
          si != sourceFiles.end(); ++si) {                                     \
       visitor.Accept(*si);                                                    \
     }                                                                         \
   }
+/* clang-format on */
 
 #define IMPLEMENT_VISIT(DATA) IMPLEMENT_VISIT_IMPL(DATA, EMPTY)
 
