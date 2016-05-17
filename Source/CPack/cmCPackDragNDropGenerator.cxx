@@ -449,10 +449,23 @@ int cmCPackDragNDropGenerator::CreateDMG(const std::string& src_dir,
     mountpoint_regex.find(attach_output.c_str());
     std::string const temp_mount = mountpoint_regex.match(1);
 
+    // Wait for the volume to actually appear.
+    int wait_tries = 5;
+    while (!cmSystemTools::FileIsDirectory(temp_mount) && --wait_tries) {
+      cmCPackLogger(cmCPackLog::LOG_VERBOSE, "Waiting for volume to appear: "
+                      << temp_mount << std::endl);
+      cmSystemTools::Delay(1000);
+    }
+    if (wait_tries == 0) {
+      cmCPackLogger(cmCPackLog::LOG_ERROR, "Temporary volume did not appear: "
+                      << temp_mount << std::endl);
+      had_error = true;
+    }
+
     // Remove dummy padding file so we have enough space on RW image ...
     std::ostringstream dummy_padding;
     dummy_padding << temp_mount << "/.dummy-padding-file";
-    if (!cmSystemTools::RemoveFile(dummy_padding.str())) {
+    if (!had_error && !cmSystemTools::RemoveFile(dummy_padding.str())) {
       cmCPackLogger(cmCPackLog::LOG_ERROR, "Error removing dummy padding file."
                       << std::endl);
 
