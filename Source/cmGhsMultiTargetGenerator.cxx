@@ -465,7 +465,6 @@ cmGhsMultiTargetGenerator::GetObjectNames(
   for (std::vector<cmSourceFile*>::const_iterator sf =
          duplicateSources.begin();
        sf != duplicateSources.end(); ++sf) {
-    static std::string::size_type const MAX_FULL_PATH_LENGTH = 247;
     std::string const longestObjectDirectory(
       cmGhsMultiTargetGenerator::ComputeLongestObjectDirectory(
         localGhsMultiGenerator, generatorTarget, *sf));
