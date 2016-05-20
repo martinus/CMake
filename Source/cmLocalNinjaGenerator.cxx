@@ -12,6 +12,7 @@
 ============================================================================*/
 #include "cmLocalNinjaGenerator.h"
 
+#include "cmCryptoHash.h"
 #include "cmCustomCommandGenerator.h"
 #include "cmGeneratedFileStream.h"
 #include "cmGlobalNinjaGenerator.h"
@@ -20,6 +21,7 @@
 #include "cmSourceFile.h"
 #include "cmState.h"
 #include "cmake.h"
+#include <cmsys/Base64.h>
 
 #include <assert.h>
 
@@ -286,7 +288,7 @@ void cmLocalNinjaGenerator::AppendCustomCommandDeps(
 }
 
 std::string cmLocalNinjaGenerator::BuildCommandLine(
-  const std::vector<std::string>& cmdLines)
+  const std::vector<std::string>& cmdLines, bool cmdUsesNinjaVariables)
 {
   // If we have no commands but we need to build a command anyway, use ":".
   // This happens when building a POST_BUILD value for link targets that
@@ -299,9 +301,9 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
 #endif
 
   std::ostringstream cmd;
+#ifdef _WIN32
   for (std::vector<std::string>::const_iterator li = cmdLines.begin();
        li != cmdLines.end(); ++li)
-#ifdef _WIN32
   {
     if (li != cmdLines.begin()) {
       cmd << " && ";
@@ -313,7 +315,54 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
   if (cmdLines.size() > 1) {
     cmd << "\"";
   }
+
+  // windows command line cannot be longer than 8191 https://support.microsoft.com/en-us/kb/830473
+  if (cmd.str().size() > 8191) {
+    // fail if command is too long and we can't generate it due to ninja variables
+    if (cmdUsesNinjaVariables) {
+      std::ostringstream err;
+      err << "CMake could not generate Ninja command since it uses more than 8191 characters"
+        " and ninja variables prevented it from being generated as an external file. You "
+        "probably need to select a different build tool.";
+      cmSystemTools::Error(err.str().c_str());
+      cmSystemTools::SetFatalErrorOccured();
+      return cmd.str();
+    }
+
+    // we need a command file. Create one from the hash of the commandfile.
+    cmCryptoHashSHA1 hasher;
+    const std::string cmdFile = hasher.HashString(cmd.str()) + ".cmd";
+
+    // TODO fail if can't open file
+    std::ofstream fout(cmdFile);
+    if (!fout.is_open()) {
+      std::ostringstream err;
+      err << "CMake failed to create " << cmdFile;
+      cmSystemTools::Error(err.str().c_str());
+      cmSystemTools::SetFatalErrorOccured();
+      return cmd.str();
+    }
+
+    // cmd just calls the batch file
+    cmd.clear();
+    cmd.str("");
+    cmd << "cmd.exe /C " << cmdFile;
+
+    // don't be noisy
+    fout << "@echo off" << std::endl;
+    for (std::vector<std::string>::const_iterator li = cmdLines.begin();
+      li != cmdLines.end(); ++li)
+    {
+      if (li != cmdLines.begin()) {
+        fout << "if %errorlevel% neq 0 exit /b %errorlevel%" << std::endl;
+      }
+      fout << *li << std::endl;
+    }
+  }
+
 #else
+  for (std::vector<std::string>::const_iterator li = cmdLines.begin();
+    li != cmdLines.end(); ++li)
   {
     if (li != cmdLines.begin()) {
       cmd << " && ";
@@ -399,7 +448,7 @@ void cmLocalNinjaGenerator::WriteCustomCommandBuildStatement(
       cmNinjaDeps(), orderOnlyDeps, cmNinjaVars());
   } else {
     this->GetGlobalNinjaGenerator()->WriteCustomCommandBuild(
-      this->BuildCommandLine(cmdLines), this->ConstructComment(ccg),
+      this->BuildCommandLine(cmdLines, false), this->ConstructComment(ccg),
       "Custom command for " + ninjaOutputs[0], cc->GetUsesTerminal(),
       /*restat*/ !symbolic || !byproducts.empty(), ninjaOutputs, ninjaDeps,
       orderOnlyDeps);
