@@ -324,11 +324,13 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
 
     std::ofstream fout(cmdFile);
     // TODO fail if can't open file
+    // don't be noisy
+    fout << "@echo off" << std::endl;
     for (std::vector<std::string>::const_iterator li = cmdLines.begin();
       li != cmdLines.end(); ++li)
     {
       if (li != cmdLines.begin()) {
-        fout << "@if %errorlevel% neq 0 exit /b %errorlevel%" << std::endl;
+        fout << "if %errorlevel% neq 0 exit /b %errorlevel%" << std::endl;
       }
       fout << *li << std::endl;
     }
