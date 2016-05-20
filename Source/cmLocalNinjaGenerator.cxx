@@ -286,7 +286,7 @@ void cmLocalNinjaGenerator::AppendCustomCommandDeps(
 }
 
 std::string cmLocalNinjaGenerator::BuildCommandLine(
-  const std::vector<std::string>& cmdLines)
+  const std::vector<std::string>& cmdLines, const std::string& cmdFile)
 {
   // If we have no commands but we need to build a command anyway, use ":".
   // This happens when building a POST_BUILD value for link targets that
@@ -299,9 +299,9 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
 #endif
 
   std::ostringstream cmd;
+#ifdef _WIN32
   for (std::vector<std::string>::const_iterator li = cmdLines.begin();
        li != cmdLines.end(); ++li)
-#ifdef _WIN32
   {
     if (li != cmdLines.begin()) {
       cmd << " && ";
@@ -313,7 +313,30 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
   if (cmdLines.size() > 1) {
     cmd << "\"";
   }
+
+  // windows command line cannot be longer than 8191 https://support.microsoft.com/en-us/kb/830473
+  // TODO fail if command is too long and no file specified
+  if (cmd.str().size() > 8191 && !cmdFile.empty()) {
+    // cmd just calls the batch file
+    cmd.clear();
+    cmd.str("");
+    cmd << "cmd.exe /C " << cmdFile;
+
+    std::ofstream fout(cmdFile);
+    // TODO fail if can't open file
+    for (std::vector<std::string>::const_iterator li = cmdLines.begin();
+      li != cmdLines.end(); ++li)
+    {
+      if (li != cmdLines.begin()) {
+        fout << "@if %errorlevel% neq 0 exit /b %errorlevel%" << std::endl;
+      }
+      fout << *li << std::endl;
+    }
+  }
+
 #else
+  for (std::vector<std::string>::const_iterator li = cmdLines.begin();
+    li != cmdLines.end(); ++li)
   {
     if (li != cmdLines.begin()) {
       cmd << " && ";
