@@ -95,7 +95,7 @@ void cmNinjaUtilityTargetGenerator::Generate()
       "Utility command for " + this->GetTargetName(), outputs, deps);
   } else {
     std::string command =
-      this->GetLocalGenerator()->BuildCommandLine(commands, this->GetTargetName() + ".bat");
+      this->GetLocalGenerator()->BuildCommandLine(commands);
     const char* echoStr =
       this->GetGeneratorTarget()->GetProperty("EchoString");
     std::string desc;
