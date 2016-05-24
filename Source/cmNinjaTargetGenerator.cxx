@@ -425,7 +425,7 @@ void cmNinjaTargetGenerator::WriteCompileRule(const std::string& lang)
     this->GetLocalGenerator()->ExpandRuleVariables(*i, vars);
 
   std::string cmdLine =
-    this->GetLocalGenerator()->BuildCommandLine(compileCmds);
+    this->GetLocalGenerator()->BuildCommandLine(compileCmds, true);
 
   // Write the rule for compiling file of the given language.
   std::ostringstream comment;
@@ -658,7 +658,7 @@ void cmNinjaTargetGenerator::ExportObjectCompileCommand(
     this->GetLocalGenerator()->ExpandRuleVariables(*i, compileObjectVars);
 
   std::string cmdLine =
-    this->GetLocalGenerator()->BuildCommandLine(compileCmds);
+    this->GetLocalGenerator()->BuildCommandLine(compileCmds, true);
 
   this->GetGlobalGenerator()->AddCXXCompileCommand(cmdLine, sourceFileName);
 }

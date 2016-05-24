@@ -60,7 +60,7 @@ public:
     cmLocalGenerator::ExpandRuleVariables(string, replaceValues);
   }
 
-  std::string BuildCommandLine(const std::vector<std::string>& cmdLines, bool cmdUsesNinjaVariables = true);
+  std::string BuildCommandLine(const std::vector<std::string>& cmdLines, bool cmdUsesNinjaVariables);
 
   void AppendTargetOutputs(cmGeneratorTarget* target, cmNinjaDeps& outputs);
   void AppendTargetDepends(cmGeneratorTarget* target, cmNinjaDeps& outputs);

@@ -21,7 +21,6 @@
 #include "cmSourceFile.h"
 #include "cmState.h"
 #include "cmake.h"
-#include <cmsys/Base64.h>
 
 #include <assert.h>
 
@@ -331,11 +330,12 @@ std::string cmLocalNinjaGenerator::BuildCommandLine(
 
     // we need a command file. Create one from the hash of the commandfile.
     cmCryptoHashSHA1 hasher;
-    const std::string cmdFile = hasher.HashString(cmd.str()) + ".cmd";
+    const std::string cmdFile = std::string(cmake::GetCMakeFilesDirectoryPostSlash())
+      + hasher.HashString(cmd.str())
+      + ".cmd";
 
-    // TODO fail if can't open file
-    std::ofstream fout(cmdFile);
-    if (!fout.is_open()) {
+    cmGeneratedFileStream fout(cmdFile.c_str());
+    if (!fout) {
       std::ostringstream err;
       err << "CMake failed to create " << cmdFile;
       cmSystemTools::Error(err.str().c_str());

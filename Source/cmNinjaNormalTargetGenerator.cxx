@@ -234,7 +234,7 @@ void cmNinjaNormalTargetGenerator::WriteLinkRule(bool useResponseFile)
     linkCmds.insert(linkCmds.begin(), "$PRE_LINK");
     linkCmds.push_back("$POST_BUILD");
     std::string linkCmd =
-      this->GetLocalGenerator()->BuildCommandLine(linkCmds);
+      this->GetLocalGenerator()->BuildCommandLine(linkCmds, true);
 
     // Write the linker rule with response file if needed.
     std::ostringstream comment;
@@ -597,8 +597,8 @@ void cmNinjaNormalTargetGenerator::WriteLinkStatement()
     preLinkCmdLines.push_back("cd " + homeOutDir);
   }
 
-  vars["PRE_LINK"] = localGen.BuildCommandLine(preLinkCmdLines);
-  std::string postBuildCmdLine = localGen.BuildCommandLine(postBuildCmdLines);
+  vars["PRE_LINK"] = localGen.BuildCommandLine(preLinkCmdLines, false);
+  std::string postBuildCmdLine = localGen.BuildCommandLine(postBuildCmdLines, false);
 
   cmNinjaVars symlinkVars;
   if (targetOutput == targetOutputReal) {
